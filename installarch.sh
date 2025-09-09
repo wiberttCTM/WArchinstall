@@ -67,4 +67,9 @@ grub-mkconfig -o /boot/grub/grub.cfg
 systemctl enable NetworkManager
 EOF
 
+# --- COPIAR SCRIPT DE POSTINSTALACIÓN AL HOME DEL NUEVO USUARIO ---
+cp /root/ArchinstallW/postinstallarch.sh /mnt/home/$USERNAME/
+chmod +x /mnt/home/$USERNAME/postinstallarch.sh
+chown $USERNAME:$USERNAME /mnt/home/$USERNAME/postinstallarch.sh
+
 umount -R /mnt
