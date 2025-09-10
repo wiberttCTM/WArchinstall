@@ -1,30 +1,54 @@
 #!/bin/bash
 
+# Función para leer contraseña mostrando asteriscos
+read_password() {
+    prompt="$1"
+    password=""
+    while IFS= read -p "$prompt" -r -s -n 1 char; do
+        if [[ $char == $'\0' ]]; then
+            break
+        fi
+        if [[ $char == $'\177' ]]; then
+            # Backspace
+            if [ -n "$password" ]; then
+                password=${password%?}
+                echo -ne "\b \b"
+            fi
+        else
+            password+="$char"
+            echo -n "*"
+        fi
+    done
+    echo
+    REPLY="$password"
+}
+
+echo "========================================"
+echo "      Script de instalación Arch Linux"
+echo "========================================"
+
 # Preguntar datos al usuario con confirmación y verificación de contraseñas
 while true; do
+    echo "----------------------------------------"
     read -p "Nombre del equipo (hostname): " HOSTNAME
     read -p "Nombre de usuario: " USERNAME
 
-    # Contraseña de usuario con confirmación
+    # Contraseña de usuario con confirmación y asteriscos
     while true; do
-        echo -n "Contraseña para $USERNAME: "
-        read -s USERPASS1
-        echo
-        echo -n "Confirma la contraseña para $USERNAME: "
-        read -s USERPASS2
-        echo
+        read_password "Contraseña para $USERNAME: "
+        USERPASS1="$REPLY"
+        read_password "Confirma la contraseña para $USERNAME: "
+        USERPASS2="$REPLY"
         [ "$USERPASS1" = "$USERPASS2" ] && USERPASS="$USERPASS1" && break
         echo "❌ Las contraseñas de usuario no coinciden. Intenta de nuevo."
     done
 
-    # Contraseña de root con confirmación
+    # Contraseña de root con confirmación y asteriscos
     while true; do
-        echo -n "Contraseña para root: "
-        read -s ROOTPASS1
-        echo
-        echo -n "Confirma la contraseña para root: "
-        read -s ROOTPASS2
-        echo
+        read_password "Contraseña para root: "
+        ROOTPASS1="$REPLY"
+        read_password "Confirma la contraseña para root: "
+        ROOTPASS2="$REPLY"
         [ "$ROOTPASS1" = "$ROOTPASS2" ] && ROOTPASS="$ROOTPASS1" && break
         echo "❌ Las contraseñas de root no coinciden. Intenta de nuevo."
     done
@@ -38,17 +62,26 @@ while true; do
     echo "----------------------------------------"
     read -p "¿Son correctos estos datos? (s/n): " CONFIRM
     [[ "$CONFIRM" =~ ^[Ss]$ ]] && break
+    echo "----------------------------------------"
     echo "Por favor, vuelve a ingresar los datos."
 done
+
+echo "========================================"
+echo "   Iniciando instalación del sistema..."
+echo "========================================"
 
 # Variables de disco (puedes preguntar esto también si quieres)
 DISK="/dev/nvme0n1"
 
 # 1. Conexión y reloj
+echo "----------------------------------------"
+echo "Verificando conexión a Internet..."
 ping -c 3 archlinux.org || { echo "Sin internet"; exit 1; }
 timedatectl set-ntp true
 
 # 2. Limpieza y particionado
+echo "----------------------------------------"
+echo "Particionando y formateando disco..."
 wipefs -a "$DISK"
 parted -s "$DISK" mklabel gpt
 parted -s "$DISK" mkpart primary fat32 1MiB 801MiB
@@ -65,12 +98,16 @@ mkdir -p /mnt/boot
 mount "${DISK}p1" /mnt/boot
 
 # 5. Instalación base
+echo "----------------------------------------"
+echo "Instalando sistema base..."
 pacstrap -K /mnt base linux linux-firmware vim networkmanager grub efibootmgr amd-ucode zsh sudo
 
 # 6. fstab
 genfstab -U /mnt >> /mnt/etc/fstab
 
 # 7. Configuración completa en chroot (totalmente automática)
+echo "----------------------------------------"
+echo "Configurando sistema en chroot..."
 arch-chroot /mnt /bin/bash <<EOF
 ln -sf /usr/share/zoneinfo/America/Lima /etc/localtime
 hwclock --systohc
@@ -100,4 +137,10 @@ EOF
 # --- COPIAR SCRIPT DE POSTINSTALACIÓN AL HOME DEL NUEVO USUARIO ---
 cp /root/WArchinstall/postinstallarch.sh /mnt/home/$USERNAME/
 
+echo "----------------------------------------"
+echo "Desmontando particiones y finalizando..."
 umount -R /mnt
+
+echo "========================================"
+echo "Instalación finalizada. ¡Reinicia tu equipo!"
+echo "========================================"
