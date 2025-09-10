@@ -7,16 +7,16 @@ echo "========================================"
 # Preguntar datos al usuario con confirmación y verificación de contraseñas
 while true; do
     echo "----------------------------------------"
-    read -p "Nombre del equipo (hostname): " HOSTNAME
-    read -p "Nombre de usuario: " USERNAME
+    read -p "Nombre del equipo (hostname): " HOSTNAME || { echo "Instalación cancelada por el usuario."; exit 1; }
+    read -p "Nombre de usuario: " USERNAME || { echo "Instalación cancelada por el usuario."; exit 1; }
 
     # Contraseña de usuario con confirmación
     while true; do
         echo -n "Contraseña para $USERNAME: "
-        read -s USERPASS1
+        read -s USERPASS1 || { echo; echo "Instalación cancelada por el usuario."; exit 1; }
         echo
         echo -n "Confirma la contraseña para $USERNAME: "
-        read -s USERPASS2
+        read -s USERPASS2 || { echo; echo "Instalación cancelada por el usuario."; exit 1; }
         echo
         [ "$USERPASS1" = "$USERPASS2" ] && USERPASS="$USERPASS1" && break
         echo "❌ Las contraseñas de usuario no coinciden. Intenta de nuevo."
@@ -25,10 +25,10 @@ while true; do
     # Contraseña de root con confirmación
     while true; do
         echo -n "Contraseña para root: "
-        read -s ROOTPASS1
+        read -s ROOTPASS1 || { echo; echo "Instalación cancelada por el usuario."; exit 1; }
         echo
         echo -n "Confirma la contraseña para root: "
-        read -s ROOTPASS2
+        read -s ROOTPASS2 || { echo; echo "Instalación cancelada por el usuario."; exit 1; }
         echo
         [ "$ROOTPASS1" = "$ROOTPASS2" ] && ROOTPASS="$ROOTPASS1" && break
         echo "❌ Las contraseñas de root no coinciden. Intenta de nuevo."
@@ -41,7 +41,7 @@ while true; do
     echo "Contraseña de usuario: [oculta]"
     echo "Contraseña de root: [oculta]"
     echo "----------------------------------------"
-    read -p "¿Son correctos estos datos? (s/n): " CONFIRM
+    read -p "¿Son correctos estos datos? (s/n): " CONFIRM || { echo "Instalación cancelada por el usuario."; exit 1; }
     [[ "$CONFIRM" =~ ^[Ss]$ ]] && break
     echo "----------------------------------------"
     echo "Por favor, vuelve a ingresar los datos."
