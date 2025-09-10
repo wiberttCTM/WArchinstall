@@ -1,28 +1,5 @@
 #!/bin/bash
 
-# Función para leer contraseña mostrando asteriscos
-read_password() {
-    prompt="$1"
-    password=""
-    while IFS= read -p "$prompt" -r -s -n 1 char; do
-        if [[ $char == $'\0' ]]; then
-            break
-        fi
-        if [[ $char == $'\177' ]]; then
-            # Backspace
-            if [ -n "$password" ]; then
-                password=${password%?}
-                echo -ne "\b \b"
-            fi
-        else
-            password+="$char"
-            echo -n "*"
-        fi
-    done
-    echo
-    REPLY="$password"
-}
-
 echo "========================================"
 echo "      Script de instalación Arch Linux"
 echo "========================================"
@@ -33,22 +10,26 @@ while true; do
     read -p "Nombre del equipo (hostname): " HOSTNAME
     read -p "Nombre de usuario: " USERNAME
 
-    # Contraseña de usuario con confirmación y asteriscos
+    # Contraseña de usuario con confirmación
     while true; do
-        read_password "Contraseña para $USERNAME: "
-        USERPASS1="$REPLY"
-        read_password "Confirma la contraseña para $USERNAME: "
-        USERPASS2="$REPLY"
+        echo -n "Contraseña para $USERNAME: "
+        read -s USERPASS1
+        echo
+        echo -n "Confirma la contraseña para $USERNAME: "
+        read -s USERPASS2
+        echo
         [ "$USERPASS1" = "$USERPASS2" ] && USERPASS="$USERPASS1" && break
         echo "❌ Las contraseñas de usuario no coinciden. Intenta de nuevo."
     done
 
-    # Contraseña de root con confirmación y asteriscos
+    # Contraseña de root con confirmación
     while true; do
-        read_password "Contraseña para root: "
-        ROOTPASS1="$REPLY"
-        read_password "Confirma la contraseña para root: "
-        ROOTPASS2="$REPLY"
+        echo -n "Contraseña para root: "
+        read -s ROOTPASS1
+        echo
+        echo -n "Confirma la contraseña para root: "
+        read -s ROOTPASS2
+        echo
         [ "$ROOTPASS1" = "$ROOTPASS2" ] && ROOTPASS="$ROOTPASS1" && break
         echo "❌ Las contraseñas de root no coinciden. Intenta de nuevo."
     done
