@@ -4,6 +4,29 @@ echo "========================================"
 echo "      Script de instalación Arch Linux"
 echo "========================================"
 
+# -------------------------------
+# Función para leer contraseñas con asteriscos
+# -------------------------------
+read_password() {
+    local password=""
+    local char
+
+    while IFS= read -r -s -n1 char; do
+        # Si presiona ENTER -> salir del bucle
+        [[ $char == "" ]] && break
+        # Si presiona BACKSPACE -> borrar último caracter
+        if [[ $char == $'\177' || $char == $'\b' ]]; then
+            [[ -n $password ]] && password=${password%?}
+            echo -ne "\b \b"
+        else
+            password+=$char
+            echo -n "*"
+        fi
+    done
+    echo
+    REPLY=$password
+}
+
 # Preguntar datos al usuario con confirmación y verificación de contraseñas
 while true; do
     echo "----------------------------------------"
@@ -13,11 +36,13 @@ while true; do
     # Contraseña de usuario con confirmación
     while true; do
         echo -n "Contraseña para $USERNAME: "
-        read -s USERPASS1 || { echo; echo "Instalación cancelada por el usuario."; exit 1; }
-        echo
+        read_password
+        USERPASS1=$REPLY
+
         echo -n "Confirma la contraseña para $USERNAME: "
-        read -s USERPASS2 || { echo; echo "Instalación cancelada por el usuario."; exit 1; }
-        echo
+        read_password
+        USERPASS2=$REPLY
+
         [ "$USERPASS1" = "$USERPASS2" ] && USERPASS="$USERPASS1" && break
         echo "❌ Las contraseñas de usuario no coinciden. Intenta de nuevo."
     done
@@ -25,11 +50,13 @@ while true; do
     # Contraseña de root con confirmación
     while true; do
         echo -n "Contraseña para root: "
-        read -s ROOTPASS1 || { echo; echo "Instalación cancelada por el usuario."; exit 1; }
-        echo
+        read_password
+        ROOTPASS1=$REPLY
+
         echo -n "Confirma la contraseña para root: "
-        read -s ROOTPASS2 || { echo; echo "Instalación cancelada por el usuario."; exit 1; }
-        echo
+        read_password
+        ROOTPASS2=$REPLY
+
         [ "$ROOTPASS1" = "$ROOTPASS2" ] && ROOTPASS="$ROOTPASS1" && break
         echo "❌ Las contraseñas de root no coinciden. Intenta de nuevo."
     done
