@@ -1,15 +1,28 @@
 #!/bin/bash
 
-# Preguntar datos al usuario
-read -p "Nombre del equipo (hostname): " HOSTNAME
-read -p "Nombre de usuario: " USERNAME
+# Preguntar datos al usuario con confirmación
+while true; do
+    read -p "Nombre del equipo (hostname): " HOSTNAME
+    read -p "Nombre de usuario: " USERNAME
 
-echo -n "Contraseña para $USERNAME: "
-read -s USERPASS
-echo
-echo -n "Contraseña para root: "
-read -s ROOTPASS
-echo
+    echo -n "Contraseña para $USERNAME: "
+    read -s USERPASS
+    echo
+    echo -n "Contraseña para root: "
+    read -s ROOTPASS
+    echo
+
+    echo "----------------------------------------"
+    echo "Resumen de configuración:"
+    echo "Hostname: $HOSTNAME"
+    echo "Usuario: $USERNAME"
+    echo "Contraseña de usuario: [oculta]"
+    echo "Contraseña de root: [oculta]"
+    echo "----------------------------------------"
+    read -p "¿Son correctos estos datos? (s/n): " CONFIRM
+    [[ "$CONFIRM" =~ ^[Ss]$ ]] && break
+    echo "Por favor, vuelve a ingresar los datos."
+done
 
 # Variables de disco (puedes preguntar esto también si quieres)
 DISK="/dev/nvme0n1"
@@ -69,7 +82,5 @@ EOF
 
 # --- COPIAR SCRIPT DE POSTINSTALACIÓN AL HOME DEL NUEVO USUARIO ---
 cp /root/WArchinstall/postinstallarch.sh /mnt/home/$USERNAME/
-chmod +x /mnt/home/$USERNAME/postinstallarch.sh
-chown $USERNAME:$USERNAME /mnt/home/$USERNAME/postinstallarch.sh
 
-umount -R /mnt
+umount
