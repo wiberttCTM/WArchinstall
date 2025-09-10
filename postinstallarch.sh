@@ -30,7 +30,7 @@ fi
 echo "--- Instalando todos los paquetes principales de una sola vez ---"
 sudo pacman -S \
 neovim hyprland sddm wl-clipboard dunst swww nwg-look kitty fastfetch waybar rofi-wayland firefox \
-network-manager-applet pipewire pavucontrol pipewire-pulse \
+network-manager-applet pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol \
 blueman bluez bluez-utils \
 yazi tlp udisks2 udiskie unzip unrar zip reflector
 
@@ -45,17 +45,17 @@ sudo systemctl enable --now bluetooth.service
 echo "Activando TLP para gestión de energía..."
 sudo systemctl enable --now tlp.service
 
-echo "Verificando el estado de PipeWire..."
+echo "Activando servicios de PipeWire y WirePlumber..."
 systemctl --user enable --now pipewire.service
 systemctl --user enable --now pipewire-pulse.service
-systemctl --user enable --now pipewire-media-session.service
-echo "Servicios de PipeWire activados para el usuario."
+systemctl --user enable --now wireplumber.service
+echo "Servicios de PipeWire y WirePlumber activados para el usuario."
 
 # --- 4. Configurar Oh My Zsh ---
 echo "--- Instalación de Oh My Zsh ---"
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    read -p "¿Quieres instalar Oh My Zsh para tu shell Zsh? (s/n): " choice
-    if [[ "$choice" =~ ^[Ss]$ ]]; then
+    read -p "¿Quieres instalar Oh My Zsh para tu shell Zsh? (Y/n): " choice
+    if [[ "$choice" =~ ^[Yy]$ || -z "$choice" ]]; then
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
         echo "✅ Oh My Zsh se instaló correctamente."
     fi
@@ -64,4 +64,4 @@ else
 fi
 
 echo "¡Script de post-instalación finalizado!"
-echo "Por favor, reinicia para que el entorno gráfico y los servicios se
+echo "Por favor, reinicia para que el entorno gráfico y los servicios se inicien
