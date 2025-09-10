@@ -19,37 +19,38 @@ echo "========================================"
 echo "----------------------------------------"
 echo "[*] Configurando /etc/pacman.conf..."
 
-# Activar Color
-sudo sed -i 's/^#Color/Color/' /etc/pacman.conf
-echo "[OK] Color activado en pacman.conf."
+# Color
+if grep -q "^#Color" /etc/pacman.conf; then
+  sudo sed -i 's/^#Color/Color/' /etc/pacman.conf
+  echo "[OK] Color activado en pacman.conf."
+else
+  echo "[!] Color ya estaba activado."
+fi
 
-# Configurar ParallelDownloads
+# ParallelDownloads (cambiar a 10 si ya está activo o añadirlo si no está)
 if grep -q "^ParallelDownloads" /etc/pacman.conf; then
   sudo sed -i 's/^ParallelDownloads.*/ParallelDownloads = 10/' /etc/pacman.conf
-  echo "[OK] ParallelDownloads cambiado a 10."
+  echo "[OK] ParallelDownloads cambiado a 10 en pacman.conf."
 else
-  sudo sed -i '/^#Para/aParallelDownloads = 10' /etc/pacman.conf
+  echo "ParallelDownloads = 10" | sudo tee -a /etc/pacman.conf >/dev/null
   echo "[OK] ParallelDownloads añadido a pacman.conf."
 fi
 
-# Descomentar [multilib]
+# Descomentar [multilib] si está comentado
+echo "----------------------------------------"
+echo "[*] Verificando [multilib] en pacman.conf..."
 multilib_changed=0
 if grep -q "^#\[multilib\]" /etc/pacman.conf; then
   sudo sed -i '/^#\[multilib\]/,/^#Include/ s/^#//' /etc/pacman.conf
   multilib_changed=1
   echo "[OK] multilib descomentado en pacman.conf."
 else
-  echo "[!] multilib ya estaba habilitado."
+  echo "[!] multilib ya estaba habilitado o no se encontró."
 fi
 
 echo "[OK] pacman.conf configurado."
 
----
-
-### Instalación de paquetes y servicios
-
-```bash
-# --- 2. Actualizar sistema si multilib fue modificado ---
+# --- 2. Actualizar sistema (solo si se cambió multilib) ---
 if [ "$multilib_changed" -eq 1 ]; then
   echo "----------------------------------------"
   echo "[*] Sincronizando y actualizando sistema (por cambio en multilib)..."
@@ -64,7 +65,7 @@ echo "[*] Instalando yay (si no está presente)..."
 if ! command -v yay &>/dev/null; then
     sudo pacman -S --needed --noconfirm git base-devel
     tmpdir=$(mktemp -d)
-    git clone [https://aur.archlinux.org/yay.git](https://aur.archlinux.org/yay.git) "$tmpdir/yay"
+    git clone https://aur.archlinux.org/yay.git "$tmpdir/yay"
     pushd "$tmpdir/yay" || exit 1
     makepkg -si --noconfirm
     popd
@@ -84,7 +85,7 @@ main_pkgs=(
   yazi tlp udisks2 udiskie unzip unrar zip reflector
   xdg-user-dirs
 )
-sudo pacman -S --needed --noconfirm "${main_pkgs[@]}"
+sudo pacman -S --needed "${main_pkgs[@]}"
 
 # Actualizar carpetas de usuario
 xdg-user-dirs-update
@@ -94,7 +95,7 @@ echo "[OK] Paquetes y carpetas de usuario configuradas."
 # --- 4.1 Instalar paquetes desde AUR ---
 echo "----------------------------------------"
 echo "[*] Instalando paquetes desde AUR (zen-browser-bin, visual-studio-code-bin)..."
-yay -S --needed zen-browser-bin visual-studio-code-bin
+yay -S --noconfirm --needed zen-browser-bin visual-studio-code-bin
 echo "[OK] Paquetes AUR instalados."
 
 # --- 5. Instalar drivers gráficos (mesa / vulkan / AMD) ---
@@ -103,10 +104,10 @@ echo "[*] Instalando drivers gráficos AMD (Mesa, Vulkan)..."
 gpu_pkgs=(
   mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon libva-mesa-driver libva-utils
 )
-sudo pacman -S --needed --noconfirm "${gpu_pkgs[@]}"
+sudo pacman -S --needed "${gpu_pkgs[@]}"
 echo "[OK] Drivers gráficos instalados."
 
-# --- 6. Habilitar servicios ---
+# --- 6. Habilitar servicios (solo al reiniciar) ---
 echo "----------------------------------------"
 echo "[*] Habilitando servicios esenciales..."
 
@@ -133,7 +134,7 @@ if [ ! -d "$HOME/.oh-my-zsh" ]; then
     read -p "[?] ¿Quieres instalar Oh My Zsh en este usuario? (Y/n): " choice
     if [[ "$choice" =~ ^[Yy]$ ]]; then
         RUNZSH=no CHSH=no KEEP_ZSHRC=yes \
-          sh -c "$(curl -fsSL [https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh](https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh))"
+          sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
         echo "[OK] Oh My Zsh instalado. (No se cambió shell automáticamente)."
         echo "[!] Ejecuta 'chsh -s /bin/zsh' si quieres usar Zsh como predeterminado."
     else
