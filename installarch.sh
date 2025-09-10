@@ -1,16 +1,33 @@
 #!/bin/bash
 
-# Preguntar datos al usuario con confirmación
+# Preguntar datos al usuario con confirmación y verificación de contraseñas
 while true; do
     read -p "Nombre del equipo (hostname): " HOSTNAME
     read -p "Nombre de usuario: " USERNAME
 
-    echo -n "Contraseña para $USERNAME: "
-    read -s USERPASS
-    echo
-    echo -n "Contraseña para root: "
-    read -s ROOTPASS
-    echo
+    # Contraseña de usuario con confirmación
+    while true; do
+        echo -n "Contraseña para $USERNAME: "
+        read -s USERPASS1
+        echo
+        echo -n "Confirma la contraseña para $USERNAME: "
+        read -s USERPASS2
+        echo
+        [ "$USERPASS1" = "$USERPASS2" ] && USERPASS="$USERPASS1" && break
+        echo "❌ Las contraseñas de usuario no coinciden. Intenta de nuevo."
+    done
+
+    # Contraseña de root con confirmación
+    while true; do
+        echo -n "Contraseña para root: "
+        read -s ROOTPASS1
+        echo
+        echo -n "Confirma la contraseña para root: "
+        read -s ROOTPASS2
+        echo
+        [ "$ROOTPASS1" = "$ROOTPASS2" ] && ROOTPASS="$ROOTPASS1" && break
+        echo "❌ Las contraseñas de root no coinciden. Intenta de nuevo."
+    done
 
     echo "----------------------------------------"
     echo "Resumen de configuración:"
@@ -83,4 +100,4 @@ EOF
 # --- COPIAR SCRIPT DE POSTINSTALACIÓN AL HOME DEL NUEVO USUARIO ---
 cp /root/WArchinstall/postinstallarch.sh /mnt/home/$USERNAME/
 
-umount
+umount -R /mnt
