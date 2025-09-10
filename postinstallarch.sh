@@ -3,9 +3,6 @@
 # Este script se ejecuta después de una instalación exitosa de Arch Linux
 # para configurar el entorno Hyprland. Requiere interacción del usuario.
 
-# --- 1. Sincronizar y actualizar el sistema ---
-#!/bin/bash
-
 # Comprobar si el script se ejecuta como usuario normal
 if [ "$EUID" -eq 0 ]; then
   echo "Por favor, ejecuta este script como usuario normal, NO como root."
@@ -13,25 +10,22 @@ if [ "$EUID" -eq 0 ]; then
 fi
 
 echo "Sincronizando la base de datos de pacman y actualizando el sistema..."
-sudo pacman -Syu --noconfirm
+sudo pacman -Syu
 
+# Función para instalar paquetes con confirmación manual
 install_package() {
     package=$1
     if pacman -Qq "$package" &>/dev/null; then
         echo "✅ El paquete $package ya está instalado. Omitiendo la instalación."
     else
-        read -p "¿Quieres instalar el paquete '$package'? (s/n): " choice
-        if [[ "$choice" =~ ^[Ss]$ ]]; then
-            sudo pacman -S --noconfirm "$package"
-            if [ $? -eq 0 ]; then
-                echo "✅ $package se instaló correctamente."
-            else
-                echo "❌ Error al instalar $package."
-            fi
+        sudo pacman -S "$package"
+        if [ $? -eq 0 ]; then
+            echo "✅ $package se instaló correctamente."
+        else
+            echo "❌ Error al instalar $package."
         fi
     fi
 }
-
 
 # --- 3. Instalación de paquetes de Hyprland y aplicaciones ---
 echo "--- Iniciando la instalación de paquetes ---"
@@ -76,10 +70,10 @@ echo "--- Instalación de Yay ---"
 if ! command -v yay &>/dev/null; then
     read -p "¿Quieres instalar Yay (AUR Helper)? (s/n): " choice
     if [[ "$choice" =~ ^[Ss]$ ]]; then
-        sudo pacman -S --needed --noconfirm git base-devel
+        sudo pacman -S --needed git base-devel
         git clone https://aur.archlinux.org/yay.git
         cd yay
-        makepkg -si --noconfirm
+        makepkg -si
         cd ..
         rm -rf yay/
         echo "✅ Yay se instaló correctamente."
