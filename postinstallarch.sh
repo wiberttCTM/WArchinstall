@@ -38,7 +38,7 @@ fi
 # --- 3. Instalación de paquetes principales ---
 echo "----------------------------------------"
 echo "[*] Instalando paquetes principales..."
-sudo pacman -S --needed --noconfirm \
+sudo pacman -S --needed \
   neovim hyprland sddm wl-clipboard dunst swww nwg-look kitty fastfetch waybar rofi-wayland firefox \
   network-manager-applet pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol \
   blueman bluez bluez-utils \
