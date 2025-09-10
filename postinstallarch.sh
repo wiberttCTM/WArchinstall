@@ -92,6 +92,12 @@ xdg-user-dirs-update
 
 echo "[OK] Paquetes y carpetas de usuario configuradas."
 
+# --- 4.1 Instalar paquetes desde AUR ---
+echo "----------------------------------------"
+echo "[*] Instalando paquetes desde AUR (zen-browser-bin, visual-studio-code-bin)..."
+yay -S --noconfirm --needed zen-browser-bin visual-studio-code-bin
+echo "[OK] Paquetes AUR instalados."
+
 # --- 5. Instalar drivers gráficos (mesa / vulkan / AMD) ---
 echo "----------------------------------------"
 echo "[*] Instalando drivers gráficos AMD (Mesa, Vulkan)..."
