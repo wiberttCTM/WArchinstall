@@ -17,9 +17,9 @@ echo "--- Instalación de Yay ---"
 if ! command -v yay &>/dev/null; then
     sudo pacman -S --needed git base-devel
     git clone https://aur.archlinux.org/yay.git
-    cd yay
+    pushd yay || exit 1
     makepkg -si
-    cd ..
+    popd
     rm -rf yay/
     echo "✅ Yay se instaló correctamente."
 else
@@ -28,28 +28,29 @@ fi
 
 # --- 2. Instalación de paquetes principales de golpe ---
 echo "--- Instalando todos los paquetes principales de una sola vez ---"
-sudo pacman -S \
+sudo pacman -S --needed \
 neovim hyprland sddm wl-clipboard dunst swww nwg-look kitty fastfetch waybar rofi-wayland firefox \
 network-manager-applet pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol \
 blueman bluez bluez-utils \
 yazi tlp udisks2 udiskie unzip unrar zip reflector
 
-# --- 3. Habilitar y verificar servicios ---
-echo "--- Habilitando servicios esenciales ---"
+# --- 3. Habilitar servicios (solo se iniciarán tras reinicio) ---
+echo "--- Habilitando servicios esenciales (sin iniciar ahora) ---"
+
 echo "Activando SDDM (gestor de pantalla)..."
-sudo systemctl enable --now sddm.service
+sudo systemctl enable sddm.service
 
 echo "Activando Bluetooth..."
-sudo systemctl enable --now bluetooth.service
+sudo systemctl enable bluetooth.service
 
 echo "Activando TLP para gestión de energía..."
-sudo systemctl enable --now tlp.service
+sudo systemctl enable tlp.service
 
-echo "Activando servicios de PipeWire y WirePlumber..."
-systemctl --user enable --now pipewire.service
-systemctl --user enable --now pipewire-pulse.service
-systemctl --user enable --now wireplumber.service
-echo "Servicios de PipeWire y WirePlumber activados para el usuario."
+echo "Activando servicios de PipeWire y WirePlumber (usuario)..."
+systemctl --user enable pipewire.service
+systemctl --user enable pipewire-pulse.service
+systemctl --user enable wireplumber.service
+echo "✅ Servicios habilitados (se iniciarán al reiniciar sesión)."
 
 # --- 4. Configurar Oh My Zsh ---
 echo "--- Instalación de Oh My Zsh ---"
@@ -63,5 +64,7 @@ else
     echo "✅ Oh My Zsh ya está instalado. Omitiendo la instalación."
 fi
 
+echo "========================================"
 echo "¡Script de post-instalación finalizado!"
-echo "Por favor, reinicia para que el entorno gráfico y los servicios se inicien
+echo "Por favor, reinicia tu sistema para que el entorno gráfico y los servicios se activen."
+echo "========================================"
