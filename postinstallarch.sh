@@ -1,70 +1,90 @@
 #!/bin/bash
 
-# Este script se ejecuta después de una instalación exitosa de Arch Linux
-# para configurar el entorno Hyprland. Requiere intervención mínima del usuario.
+# ========================================
+# Script de post-instalación para Arch Linux + Hyprland
+# Autor: tú >:)
+# ========================================
 
-# Comprobar si el script se ejecuta como usuario normal
+# 0. Verificar usuario
 if [ "$EUID" -eq 0 ]; then
-  echo "Por favor, ejecuta este script como usuario normal, NO como root."
+  echo "[X] No ejecutes este script como root. Usa un usuario normal."
   exit 1
 fi
 
-echo "Sincronizando la base de datos de pacman y actualizando el sistema..."
-sudo pacman -Syu
+echo "========================================"
+echo "[>] Iniciando post-instalación de Arch Linux"
+echo "========================================"
 
-# --- 1. Instalación de Yay (AUR helper) ---
-echo "--- Instalación de Yay ---"
+# --- 1. Actualizar sistema ---
+echo "[*] Sincronizando y actualizando sistema..."
+sudo pacman -Syu --noconfirm
+
+# --- 2. Instalar yay (AUR helper) ---
+echo "----------------------------------------"
+echo "[*] Instalando yay (si no está presente)..."
 if ! command -v yay &>/dev/null; then
-    sudo pacman -S --needed git base-devel
-    git clone https://aur.archlinux.org/yay.git
-    pushd yay || exit 1
-    makepkg -si
+    sudo pacman -S --needed --noconfirm git base-devel
+    tmpdir=$(mktemp -d)
+    git clone https://aur.archlinux.org/yay.git "$tmpdir/yay"
+    pushd "$tmpdir/yay" || exit 1
+    makepkg -si --noconfirm
     popd
-    rm -rf yay/
-    echo "✅ Yay se instaló correctamente."
+    rm -rf "$tmpdir"
+    echo "[OK] Yay instalado correctamente."
 else
-    echo "✅ Yay ya está instalado. Omitiendo la instalación."
+    echo "[OK] Yay ya estaba instalado. Omitiendo."
 fi
 
-# --- 2. Instalación de paquetes principales de golpe ---
-echo "--- Instalando todos los paquetes principales de una sola vez ---"
-sudo pacman -S --needed \
-neovim hyprland sddm wl-clipboard dunst swww nwg-look kitty fastfetch waybar rofi-wayland firefox \
-network-manager-applet pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol \
-blueman bluez bluez-utils \
-yazi tlp udisks2 udiskie unzip unrar zip reflector
+# --- 3. Instalación de paquetes principales ---
+echo "----------------------------------------"
+echo "[*] Instalando paquetes principales..."
+sudo pacman -S --needed --noconfirm \
+  neovim hyprland sddm wl-clipboard dunst swww nwg-look kitty fastfetch waybar rofi-wayland firefox \
+  network-manager-applet pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol \
+  blueman bluez bluez-utils \
+  yazi tlp udisks2 udiskie unzip unrar zip reflector
 
-# --- 3. Habilitar servicios (solo se iniciarán tras reinicio) ---
-echo "--- Habilitando servicios esenciales (sin iniciar ahora) ---"
+echo "[OK] Paquetes instalados."
 
-echo "Activando SDDM (gestor de pantalla)..."
+# --- 4. Habilitar servicios (solo al reiniciar) ---
+echo "----------------------------------------"
+echo "[*] Habilitando servicios esenciales..."
+
+echo " - SDDM (gestor de pantalla)"
 sudo systemctl enable sddm.service
 
-echo "Activando Bluetooth..."
+echo " - Bluetooth"
 sudo systemctl enable bluetooth.service
 
-echo "Activando TLP para gestión de energía..."
+echo " - TLP (gestión de energía)"
 sudo systemctl enable tlp.service
 
-echo "Activando servicios de PipeWire y WirePlumber (usuario)..."
+echo " - PipeWire + WirePlumber (usuario)"
 systemctl --user enable pipewire.service
 systemctl --user enable pipewire-pulse.service
 systemctl --user enable wireplumber.service
-echo "✅ Servicios habilitados (se iniciarán al reiniciar sesión)."
 
-# --- 4. Configurar Oh My Zsh ---
-echo "--- Instalación de Oh My Zsh ---"
+echo "[OK] Todos los servicios fueron habilitados (se activarán tras reinicio)."
+
+# --- 5. Configurar Oh My Zsh ---
+echo "----------------------------------------"
+echo "[*] Configuración de Zsh"
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    read -p "¿Quieres instalar Oh My Zsh para tu shell Zsh? (Y/n): " choice
-    if [[ "$choice" =~ ^[Yy]$ || -z "$choice" ]]; then
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-        echo "✅ Oh My Zsh se instaló correctamente."
+    read -p "[?] ¿Quieres instalar Oh My Zsh en este usuario? (Y/n): " choice
+    if [[ "$choice" =~ ^[Yy]$ ]]; then
+        RUNZSH=no CHSH=no KEEP_ZSHRC=yes \
+          sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+        echo "[OK] Oh My Zsh instalado. (No se cambió shell automáticamente)."
+        echo "[!] Ejecuta 'chsh -s /bin/zsh' si quieres usar Zsh como predeterminado."
+    else
+        echo "[!] Oh My Zsh omitido por el usuario."
     fi
 else
-    echo "✅ Oh My Zsh ya está instalado. Omitiendo la instalación."
+    echo "[OK] Oh My Zsh ya estaba instalado."
 fi
 
+# --- 6. Final ---
 echo "========================================"
-echo "¡Script de post-instalación finalizado!"
-echo "Por favor, reinicia tu sistema para que el entorno gráfico y los servicios se activen."
+echo "[>] Post-instalación finalizada >:)"
+echo "[!] Reinicia tu sistema para activar entorno gráfico y servicios."
 echo "========================================"
