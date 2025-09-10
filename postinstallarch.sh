@@ -15,11 +15,29 @@ echo "========================================"
 echo "[>] Iniciando post-instalación de Arch Linux"
 echo "========================================"
 
-# --- 1. Actualizar sistema ---
+# --- 1. Configurar pacman.conf ---
+echo "----------------------------------------"
+echo "[*] Configurando /etc/pacman.conf..."
+
+sudo sed -i 's/^#Color/Color/' /etc/pacman.conf
+sudo sed -i 's/^#ParallelDownloads.*/ParallelDownloads = 10/' /etc/pacman.conf
+sudo sed -i 's/^#ILoveCandy/ILoveCandy/' /etc/pacman.conf
+
+# Habilitar [multilib]
+if ! grep -q "^\[multilib\]" /etc/pacman.conf; then
+  echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" | sudo tee -a /etc/pacman.conf >/dev/null
+else
+  sudo sed -i '/\[multilib\]/,/Include/ s/^#//' /etc/pacman.conf
+fi
+
+echo "[OK] pacman.conf configurado."
+
+# --- 2. Actualizar sistema ---
+echo "----------------------------------------"
 echo "[*] Sincronizando y actualizando sistema..."
 sudo pacman -Syu --noconfirm
 
-# --- 2. Instalar yay (AUR helper) ---
+# --- 3. Instalar yay (AUR helper) ---
 echo "----------------------------------------"
 echo "[*] Instalando yay (si no está presente)..."
 if ! command -v yay &>/dev/null; then
@@ -35,18 +53,29 @@ else
     echo "[OK] Yay ya estaba instalado. Omitiendo."
 fi
 
-# --- 3. Instalación de paquetes principales ---
+# --- 4. Instalación de paquetes principales ---
 echo "----------------------------------------"
 echo "[*] Instalando paquetes principales..."
 sudo pacman -S --needed \
   neovim hyprland sddm wl-clipboard dunst swww nwg-look kitty fastfetch waybar rofi-wayland firefox \
   network-manager-applet pipewire pipewire-alsa pipewire-pulse wireplumber pavucontrol \
   blueman bluez bluez-utils \
-  yazi tlp udisks2 udiskie unzip unrar zip reflector
+  yazi tlp udisks2 udiskie unzip unrar zip reflector \
+  xdg-user-dirs
 
-echo "[OK] Paquetes instalados."
+# Actualizar carpetas de usuario
+xdg-user-dirs-update
 
-# --- 4. Habilitar servicios (solo al reiniciar) ---
+echo "[OK] Paquetes y carpetas de usuario configuradas."
+
+# --- 5. Instalar drivers gráficos (mesa / vulkan / AMD) ---
+echo "----------------------------------------"
+echo "[*] Instalando drivers gráficos AMD (Mesa, Vulkan)..."
+sudo pacman -S --needed \
+  mesa lib32-mesa vulkan-radeon lib32-vulkan-radeon libva-mesa-driver libva-utils
+echo "[OK] Drivers gráficos instalados."
+
+# --- 6. Habilitar servicios (solo al reiniciar) ---
 echo "----------------------------------------"
 echo "[*] Habilitando servicios esenciales..."
 
@@ -66,7 +95,7 @@ systemctl --user enable wireplumber.service
 
 echo "[OK] Todos los servicios fueron habilitados (se activarán tras reinicio)."
 
-# --- 5. Configurar Oh My Zsh ---
+# --- 7. Configurar Oh My Zsh ---
 echo "----------------------------------------"
 echo "[*] Configuración de Zsh"
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
@@ -83,7 +112,7 @@ else
     echo "[OK] Oh My Zsh ya estaba instalado."
 fi
 
-# --- 6. Final ---
+# --- 8. Final ---
 echo "========================================"
 echo "[>] Post-instalación finalizada >:)"
 echo "[!] Reinicia tu sistema para activar entorno gráfico y servicios."
